@@ -13,6 +13,9 @@ vốn lưu động. Dư nợ cuối năm 1 vì thế là một con số cố đ�
 Việc của người học là chia đúng số dư nợ đó thành các khoản trả gốc cho những năm còn lại, sao cho
 không năm nào trả gốc âm, không năm nào tổng dòng tiền âm, mà NPV cùng IRR của dự án cao nhất có thể.
 
+Thêm một điều kiện nữa: **doanh thu là con số ngẫu nhiên**, phân phối chuẩn hoặc không chuẩn. Vì vậy
+còn phải trả lời xác suất dự án đạt kỳ vọng tài chính, tính bằng cả mô phỏng lẫn cách chính xác.
+
 Kết luận của bài đi ngược trực giác, nên trang được thiết kế để người học tự mò ra trước khi nghe giảng.
 
 ## Cách dùng
