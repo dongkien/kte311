@@ -1,3 +1,16 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{color-scheme:light dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
 <title>Lịch trả nợ KTE311</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -118,6 +131,9 @@ button.pri:hover{filter:brightness(1.08);color:#fff}
 .kpi .v{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;
   font-size:21px;font-weight:500;color:var(--navy);line-height:1.2}
 .kpi .d{font-size:11.5px;color:var(--muted)}
+.kpi .tgt{font-size:11px;color:var(--faint);margin-top:4px;padding-top:4px;
+  border-top:1px dashed var(--line);line-height:1.35}
+.kpi .tgt b{color:var(--ok)}
 .gauge{margin-top:4px}
 .track{position:relative;height:26px;background:var(--sunken);border-radius:6px;overflow:hidden}
 .fill{position:absolute;inset:0 auto 0 0;background:var(--accent);opacity:.85}
@@ -213,8 +229,9 @@ select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
         <li>Bấm <b>Trả đều</b> để thấy phương án hiển nhiên nhất, rồi nhìn ba đèn ràng buộc bên phải.
             Nhiều khả năng có một năm dòng tiền âm, nghĩa là lịch đó không chạy được.</li>
         <li>Sửa các ô trả gốc. Mọi bảng, biểu đồ và chỉ tiêu cập nhật ngay khi bạn gõ.</li>
-        <li>Thanh đo cho biết bạn đang ở đâu trên quãng đường từ phương án trả đều tới mức tối ưu.
-            Điểm chỉ được tính khi cả ba ràng buộc đều xanh.</li>
+        <li>Mức tối ưu hiện sẵn ngay dưới ô NPV và ô IRR, kèm khoảng cách còn lại, nên bạn luôn biết
+            mình còn cách đích bao xa. Thanh đo cho biết bạn đang ở đâu trên quãng đường từ phương án
+            trả đều tới mức đó. Điểm chỉ được tính khi cả ba ràng buộc đều xanh.</li>
         <li>Xong phần tất định thì xuống mục <b>Doanh thu không chắc chắn</b>, chọn một dạng phân phối
             để xem lịch của bạn chịu được cú sốc doanh thu tới đâu.</li>
         <li>Bí thì mở gợi ý ở cuối trang, mở theo thứ tự, đừng mở gợi ý 3 trước.</li>
@@ -239,14 +256,14 @@ select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     <section class="panel">
       <div class="ph"><h2>Kết quả tức thì</h2></div>
       <div class="kpis">
-        <div class="kpi"><div class="v" id="knpv">0</div><div class="d">NPV</div></div>
-        <div class="kpi"><div class="v" id="kirr">0</div><div class="d">IRR</div></div>
+        <div class="kpi"><div class="v" id="knpv">0</div><div class="d">NPV</div><div class="tgt" id="tnpv"></div></div>
+        <div class="kpi"><div class="v" id="kirr">0</div><div class="d">IRR</div><div class="tgt" id="tirr"></div></div>
         <div class="kpi"><div class="v" id="kmin">0</div><div class="d">Dòng tiền năm thấp nhất</div></div>
       </div>
       <ul class="checks" id="checks"></ul>
       <div class="gauge">
         <div class="track"><div class="fill" id="fill" style="width:0"></div><div class="tick" id="tick" style="left:0"></div></div>
-        <div class="gl"><span>Trả đều</span><span id="glmid"></span><span>Mức tối ưu</span></div>
+        <div class="gl"><span id="gllo">Trả đều</span><span id="glmid"></span><span id="glhi" style="text-align:right">Mức tối ưu</span></div>
       </div>
       <div class="score"><div class="v" id="score">0,0</div>
         <div class="m" id="scoremsg">Điểm luyện tập, thang 10.</div></div>
@@ -612,6 +629,18 @@ function render(){
   document.getElementById("glmid").textContent = feasible
     ? `bạn đang ở ${Math.round(frac*100)}% quãng đường`
     : "chưa hợp lệ nên chưa xếp được";
+  document.getElementById("gllo").textContent = `Trả đều ${f2(lo)}`;
+  document.getElementById("glhi").textContent = `Mức tối ưu ${f2(hi)}`;
+  const reached = feasible && frac >= 0.999;
+  document.getElementById("tnpv").innerHTML = reached
+    ? `<b>đã chạm mức tối ưu ${f2(hi)}</b>`
+    : feasible ? `tối ưu ${f2(hi)}<br>còn cách ${f2(hi-v)}`
+               : `tối ưu ${f2(hi)}<br>lịch chưa hợp lệ`;
+  const io_ = DE.irrOpt;
+  document.getElementById("tirr").innerHTML = reached
+    ? `<b>đã chạm mức tối ưu ${pct(io_)}</b>`
+    : feasible ? `tối ưu ${pct(io_)}<br>còn cách ${fmt((io_-ir)*100,2)} điểm phần trăm`
+               : `tối ưu ${pct(io_)}<br>lịch chưa hợp lệ`;
 
   let sc = 0;
   sc += okSum ? 1 : 0;
@@ -938,3 +967,6 @@ const last = store.get("kte311:msv");
 if(last){ document.getElementById("msv").value = last; pick(); }
 else loadDe(BANK.demo, "Đề mẫu trên lớp", "Nhập mã sinh viên ở trên để nhận đề riêng");
 </script>
+
+</body>
+</html>

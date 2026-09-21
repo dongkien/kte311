@@ -21,8 +21,9 @@ Kết luận của bài đi ngược trực giác, nên trang được thiết k
    đúng đề đó. Không nhập gì thì trang chạy đề mẫu đã chữa trên lớp.
 2. Nhập lịch trả gốc. Bảng lưu chuyển tiền tệ, NPV, IRR, ba đèn ràng buộc và hai biểu đồ cập nhật
    ngay khi gõ.
-3. Thanh đo cho biết bạn đang ở đâu trên quãng đường từ phương án trả đều tới mức tối ưu.
-   Điểm chỉ được tính khi cả ba ràng buộc đều xanh.
+3. Mức NPV và IRR tối ưu hiện sẵn ngay dưới hai ô kết quả, kèm khoảng cách còn lại, nên bạn luôn
+   biết mình còn cách đích bao xa. Thanh đo cho biết bạn đang ở đâu trên quãng đường từ phương án
+   trả đều tới mức đó. Điểm chỉ được tính khi cả ba ràng buộc đều xanh.
 4. Mục **Doanh thu không chắc chắn** mô phỏng Monte Carlo cho doanh thu dao động quanh đường kỳ vọng,
    với năm dạng phân phối: chuẩn, tam giác, đều, loga chuẩn, beta PERT. Con số đáng đọc nhất ở đó là
    xác suất lịch trả nợ của bạn vỡ ràng buộc dòng tiền.
@@ -34,7 +35,8 @@ Trang là một tệp HTML tĩnh, không cần máy chủ, không gọi mạng n
 Toàn bộ mô hình dòng tiền chạy bằng JavaScript ngay trên trình duyệt, kèm 35 ca kiểm thử tự chạy
 lúc tải trang để bảo đảm khớp với bản mô hình gốc viết bằng Python; kết quả kiểm thử hiện ở chân trang.
 
-Trang không chứa lời giải. Bộ sinh đề và bộ giải được giữ riêng.
+Trang hiện sẵn mức NPV và IRR tối ưu để người học biết đích ở đâu, nhưng **không chứa lịch trả gốc
+tối ưu**: biết đích mà vẫn phải tự tìm đường. Bộ sinh đề và bộ giải được giữ riêng.
 
 ## Giấy phép
 
