@@ -114,6 +114,18 @@ button.pri:hover{filter:brightness(1.08);color:#fff}
 .rest{margin-top:12px;font-size:13px;color:var(--muted);display:flex;
   justify-content:space-between;gap:10px;flex-wrap:wrap}
 
+/* ---- bo dung lich ---- */
+.mk{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:12px}
+.log{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.chip{display:inline-flex;gap:7px;align-items:baseline;padding:5px 10px;border-radius:999px;
+  font-size:12.5px;background:var(--sunken);border:1px solid var(--line)}
+.chip .n{font-family:"IBM Plex Mono",monospace;font-weight:500;color:var(--navy)}
+.chip.ok{background:var(--ok-soft);border-color:transparent}
+.chip.ok .n{color:var(--ok)}
+.chip.no{background:var(--bad-soft);border-color:transparent}
+.chip.no .n{color:var(--bad)}
+.chip.best{outline:2px solid var(--accent);outline-offset:1px}
+
 /* ---- den rang buoc ---- */
 .checks{display:flex;flex-direction:column;gap:7px;margin:0;padding:0;list-style:none}
 .chk{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;padding:7px 10px;border-radius:8px}
@@ -271,6 +283,25 @@ select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   </div>
 
   <section class="panel">
+    <div class="ph"><h2>Dựng lịch theo phương pháp</h2>
+      <span class="lab">công cụ, không phải đáp án</span></div>
+    <p style="color:var(--muted);font-size:13.5px;max-width:80ch;margin-bottom:14px">
+      Mò từng ô mãi cũng mệt. Bộ này dựng lịch giúp bạn, nhưng chỉ dựng được khi bạn nói cho nó
+      biết <b>ân hạn gốc tới hết năm nào</b>. Phần còn lại nó làm theo đúng ba bước: năm ngay sau
+      kỳ ân hạn là <b>năm bản lề</b>, số trả gốc năm đó được dò sao cho dư nợ về đúng 0 ở năm cuối;
+      các năm sau đó <b>quét sạch tiền</b>, tức trả hết phần tiền còn lại nên tổng dòng tiền bằng 0.
+      Việc của bạn là thử các mức ân hạn khác nhau rồi đọc kết quả.</p>
+    <div class="mk">
+      <label class="yr"><span>Ân hạn gốc tới hết năm</span>
+        <select id="mkN"></select></label>
+      <button type="button" id="mkGo" class="pri">Dựng lịch</button>
+      <button type="button" id="mkClear">Xóa sổ thử</button>
+    </div>
+    <div id="mkMsg" style="font-size:13.5px;color:var(--muted)"></div>
+    <div class="log" id="mkLog"></div>
+  </section>
+
+  <section class="panel">
     <div class="ph"><h2>Dòng tiền và dư nợ</h2>
       <span class="lab">Cột đỏ là năm vi phạm ràng buộc</span></div>
     <div class="charts">
@@ -346,7 +377,15 @@ select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
       <p>Nếu hoãn luôn có lợi thì cái gì chặn bạn lại? Ràng buộc dòng tiền của những năm cuối.
       Càng đẩy nợ về sau thì mấy năm cuối càng phải trả nhiều, tới lúc tiền làm ra không đủ.
       Nên lịch tối ưu sẽ ép những năm cuối chạm sát đáy, tức tổng dòng tiền bằng đúng 0.
-      Từ đó lùi ngược về, bạn sẽ ra được năm bản lề phải trả bao nhiêu.</p></details>
+      Từ đó lùi ngược về, bạn sẽ ra được năm bản lề phải trả bao nhiêu. Mục
+      <b>Dựng lịch theo phương pháp</b> ở giữa trang làm hộ bạn phần tính toán đó, nhưng bạn vẫn
+      phải tự tìm ra hoãn được tới đâu.</p></details>
+    <details><summary>Gợi ý 4. Cách làm bằng tay, không cần trang này</summary>
+      <p>Gọi D(t) là dư nợ cuối năm t. Ở những năm mà ràng buộc chặt, tức tổng dòng tiền bằng 0,
+      ta có D(t-1) = [A(t) + D(t)] / 1,12, trong đó A(t) là dòng tiền đầu tư năm t khi chưa tính lá
+      chắn thuế của lãi vay, còn 1,12 = 1 + lãi suất × (1 - thuế suất). Đặt D(năm cuối) = 0 rồi chạy
+      ngược công thức đó về đầu, tới khi chạm trần là dư nợ cuối năm 1. Đó là lời giải bằng tay,
+      không cần mò.</p></details>
   </section>
 
   <footer>
@@ -486,6 +525,10 @@ const store = {
   set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 };
 
+/* Sai số cho phép khi xét ràng buộc dòng tiền: 0,001 triệu USD, tức 1000 USD.
+   Phải lớn hơn sai số làm tròn của ô nhập, nếu không thì lịch đúng cũng bị báo vi phạm. */
+const EPS = 1e-3;
+
 /* ============ trạng thái ============ */
 let DE = null, M = null, p = [], n = 0;
 
@@ -572,11 +615,17 @@ function loadDe(d, label, hint){
   const saved = store.get("kte311:" + d.id);
   if(saved){ try{ p = JSON.parse(saved); }catch(e){ p = null; } }
   if(!Array.isArray(p) || p.length !== n) p = new Array(n).fill(M.D1/n);
+  const sel = document.getElementById("mkN");
+  sel.innerHTML = Array.from({length:n-1}, (_,i) =>
+    `<option value="${i+1}"${i+1 === 3 ? " selected" : ""}>năm ${i+1}</option>`).join("");
+  soThu = []; veSoThu(); document.getElementById("mkMsg").textContent = "";
   document.getElementById("simR0").value = fmt(d.P.R0, 2);
   simFields();
   writeInputs(); render();
 }
-function writeInputs(){ for(let i=0;i<n;i++) document.getElementById("p"+i).value = fmt(p[i],2); }
+/* Ô nhập hiện 4 chữ số thập phân. Lịch tối ưu ép ba năm cuối về đúng 0 nên hiện 2 chữ số là
+   đủ làm sai lệch ràng buộc. Sau khi ghi, p được đọc lại từ ô nên luôn đúng bằng cái đang hiện. */
+function writeInputs(){ for(let i=0;i<n;i++) document.getElementById("p"+i).value = fmt(p[i],4); }
 function onEdit(){
   for(let i=0;i<n;i++) p[i] = parseNum(document.getElementById("p"+i).value);
   store.set("kte311:" + DE.id, JSON.stringify(p));
@@ -597,18 +646,20 @@ function render(){
   const v = npv(o.CFI, M.r), ir = irr(o.CFI);
   const cf = o.CF.slice(1);
   const minCF = Math.min(...cf);
-  const viPham = cf.filter(x => x < -1e-9).length;
+  const viPham = cf.filter(x => x < -EPS).length;
   const okSum = Math.abs(sum - M.D1) < 5e-3;
   const okNonNeg = Math.min(...p) >= -1e-9;
   const okCF = viPham === 0;
+  const minHien = Math.abs(minCF) < EPS ? 0 : minCF;
   const feasible = okSum && okNonNeg && okCF;
 
   document.getElementById("sump").textContent = f2(sum);
-  document.getElementById("restp").textContent = f2(M.D1 - sum);
+  const con = M.D1 - sum;
+  document.getElementById("restp").textContent = f2(Math.abs(con) < EPS ? 0 : con);
   document.getElementById("knpv").textContent = f2(v);
   document.getElementById("kirr").textContent = pct(ir);
-  document.getElementById("kmin").textContent = f2(minCF);
-  document.getElementById("kmin").style.color = minCF < -1e-9 ? "var(--bad)" : "var(--navy)";
+  document.getElementById("kmin").textContent = f2(minHien);
+  document.getElementById("kmin").style.color = minCF < -EPS ? "var(--bad)" : "var(--navy)";
   for(let i=0;i<n;i++) document.getElementById("yr"+i).classList.toggle("warn", p[i] < -1e-9);
 
   document.getElementById("checks").innerHTML = [
@@ -617,7 +668,7 @@ function render(){
     [okNonNeg, `Trả gốc từng năm không âm`,
       okNonNeg ? `năm thấp nhất ${f2(Math.min(...p))}` : `có năm âm, ngân hàng không cho vay ngược`],
     [okCF, `Tổng dòng tiền từng năm không âm`,
-      okCF ? `năm thấp nhất ${f2(minCF)}` : `${viPham} năm âm, dự án không đủ tiền trả nợ`]
+      okCF ? `năm thấp nhất ${f2(minHien)}` : `${viPham} năm âm, dự án không đủ tiền trả nợ`]
   ].map(([ok,t,w]) =>
     `<li class="chk ${ok?"pass":"fail"}"><span class="dot"></span><span>${t}<span class="why">${w}</span></span></li>`
   ).join("");
@@ -761,6 +812,68 @@ function line(id, yrs, vals){
   });
 }
 
+
+
+/* ============ bộ dựng lịch: ân hạn + năm bản lề + quét tiền ============ */
+/** Dựng lịch khi biết số trả gốc năm bản lề, các năm sau quét sạch tiền. */
+function xayLich(banLe, x){
+  const Y = M.Y, q = new Array(Y-1).fill(0);
+  q[banLe-2] = x;
+  for(let t=banLe+1;t<=Y;t++){
+    const o = run(M, q);
+    q[t-2] = Math.max(0, Math.min(o.D[t-1], o.CFI[t] - o.LV[t]));   // quét sạch tiền
+  }
+  return {q, con: run(M, q).D[Y]};
+}
+/** Với kỳ ân hạn tới hết năm N, tìm số trả gốc nhỏ nhất ở năm bản lề mà vẫn trả hết nợ. */
+function dungTheoAnHan(N){
+  const Y = M.Y, banLe = N + 1;
+  if(banLe > Y) return {ok:false, vi:"không còn năm nào để trả"};
+  const o0 = run(M, new Array(Y-1).fill(0));
+  const tran = Math.min(o0.D[banLe-1], o0.CFI[banLe] - o0.LV[banLe]);
+  if(tran <= 0) return {ok:false, vi:`năm ${banLe} không còn đồng nào sau khi trả lãi`};
+  if(xayLich(banLe, tran).con > 1e-7)
+    return {ok:false, vi:`hoãn tới hết năm ${N} thì những năm cuối không kịp trả hết nợ`};
+  let lo = 0, hi = tran;
+  for(let k=0;k<120;k++){
+    const m = (lo+hi)/2;
+    if(xayLich(banLe, m).con > 1e-9) lo = m; else hi = m;
+  }
+  const r = xayLich(banLe, hi);
+  return {ok:true, q:r.q, banLe};
+}
+let soThu = [];
+function veSoThu(){
+  const best = soThu.filter(x => x.ok).reduce((a,b) => !a || b.npv > a.npv ? b : a, null);
+  document.getElementById("mkLog").innerHTML = soThu.map(x =>
+    x.ok ? `<span class="chip ok ${best && x.N === best.N ? "best" : ""}">ân hạn tới năm ${x.N}` +
+           `<span class="n">NPV ${f2(x.npv)}</span></span>`
+         : `<span class="chip no">ân hạn tới năm ${x.N}<span class="n">không khả thi</span></span>`
+  ).join("");
+}
+function dungLich(){
+  const N = +document.getElementById("mkN").value;
+  const r = dungTheoAnHan(N), msg = document.getElementById("mkMsg");
+  if(!r.ok){
+    msg.innerHTML = `<b style="color:var(--bad)">Không dựng được:</b> ${r.vi}. ` +
+      `Nghĩa là bạn đã hoãn quá tay. Lùi lại một năm rồi thử tiếp.`;
+    if(!soThu.some(x => x.N === N)) soThu.push({N, ok:false});
+    veSoThu(); return;
+  }
+  p = r.q; writeInputs(); onEdit();
+  const v = npv(run(M, p).CFI, M.r);
+  const i = soThu.findIndex(x => x.N === N);
+  const rec = {N, ok:true, npv:v};
+  if(i >= 0) soThu[i] = rec; else soThu.push(rec);
+  soThu.sort((a,b) => a.N - b.N); veSoThu();
+  msg.innerHTML = `Ân hạn gốc hết năm ${N}, năm bản lề là năm ${r.banLe} trả ` +
+    `<b>${f2(p[r.banLe-2])}</b>, các năm sau quét sạch tiền. NPV ra <b>${f2(v)}</b>. ` +
+    `Thử thêm một năm ân hạn nữa xem NPV đi lên hay tường chặn lại.`;
+}
+document.getElementById("mkGo").addEventListener("click", dungLich);
+document.getElementById("mkClear").addEventListener("click", () => {
+  soThu = []; veSoThu(); document.getElementById("mkMsg").textContent = "";
+});
 
 /* ============ mô phỏng rủi ro doanh thu ============ */
 function mulberry32(a){

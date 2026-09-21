@@ -24,10 +24,14 @@ Kết luận của bài đi ngược trực giác, nên trang được thiết k
 3. Mức NPV và IRR tối ưu hiện sẵn ngay dưới hai ô kết quả, kèm khoảng cách còn lại, nên bạn luôn
    biết mình còn cách đích bao xa. Thanh đo cho biết bạn đang ở đâu trên quãng đường từ phương án
    trả đều tới mức đó. Điểm chỉ được tính khi cả ba ràng buộc đều xanh.
-4. Mục **Doanh thu không chắc chắn** mô phỏng Monte Carlo cho doanh thu dao động quanh đường kỳ vọng,
+4. Mục **Dựng lịch theo phương pháp** không giải hộ bạn. Bạn nói cho nó biết ân hạn gốc tới hết
+   năm nào, nó dựng phần còn lại theo đúng ba bước của phương pháp rồi báo NPV. Thử lần lượt các
+   mức ân hạn, sổ thử ghi lại từng lần, và chỗ NPV cao nhất ngay trước khi gặp "không khả thi"
+   chính là nghiệm.
+5. Mục **Doanh thu không chắc chắn** mô phỏng Monte Carlo cho doanh thu dao động quanh đường kỳ vọng,
    với năm dạng phân phối: chuẩn, tam giác, đều, loga chuẩn, beta PERT. Con số đáng đọc nhất ở đó là
    xác suất lịch trả nợ của bạn vỡ ràng buộc dòng tiền.
-5. Ba gợi ý ở cuối trang, mở theo thứ tự.
+6. Bốn gợi ý ở cuối trang, mở theo thứ tự. Gợi ý cuối là cách giải bằng tay, không cần trang này.
 
 ## Ghi chú kỹ thuật
 
